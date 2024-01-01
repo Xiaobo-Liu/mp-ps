@@ -5,7 +5,7 @@ single, and half (simulated by `chop`) precisions (no `mp` computation). Functio
 
 Details on the underlying algorithms can be found in the technical report:
 
-X. Liu. Mixed-Precision Paterson--Stockmeyer Method for Evaluating Polynomials of Matrices, MIMS EPrint, Manchester Institute for Mathematical Sciences, The University of Manchester, UK, December 2023.
+X. Liu. Mixed-precision Paterson–Stockmeyer method for evaluating polynomials of matrices, preprint, https://arxiv.org/abs/2312.17396.
 
 All codes used for generating the data in the above report are included in this repository.
 
