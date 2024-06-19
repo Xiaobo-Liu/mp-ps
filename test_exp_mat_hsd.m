@@ -50,6 +50,8 @@ end
 ee_fixprec_scal = scal_small_error(ee_fixprec, num_digs);
 ee_scal = scal_small_error(ee, num_digs);
 
+[~, perm] = sort(n_mats.*rr);
+
 % save the data
 dataname = sprintf('data/exp_mat_hsd.mat');
 save(dataname, 'n_mats', 'rr', 'perm', 'u', 'ee_scal', 'ee_fixprec_scal', 'complex_reduc', 'num_mats');
@@ -59,7 +61,7 @@ save(dataname, 'n_mats', 'rr', 'perm', 'u', 'ee_scal', 'ee_fixprec_scal', 'compl
 % load(dataname)
 
 
-[~, perm] = sort(n_mats.*rr);
+
 
 
 semilogy(1:num_mats, rr(perm).*n_mats(perm)*u,'-', 1:num_mats, ee_scal(perm),'v', 1:num_mats, ee_fixprec_scal(perm),'o', ...
