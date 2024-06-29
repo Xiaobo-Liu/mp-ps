@@ -1,108 +1,130 @@
-addpath('include', 'external');
+addpath('external','include',"testmats");
+
+format compact
+warning off
+
 rng(0);
 
-
-
-Padetype = 'numerator';
-n = 50;
-
-
-
-
-
-delta = 10;
+n = 100;
 
 u = eps('double')/2;
-[~, num_total_mats] = mygallery();
+yaxis_lim =  [1e-17 1e-12];
+yaxis_ticks = 10.^(-17:1:-12);
 
-num_mats = 97; % there are 97 non-Hermitian matrices in total
+num_digs = round(log10(1/u),0);
+padetype = ["numerator", "denominator"];
 
-% tau1 = zeros(num_mats,1);
-rr = zeros(num_mats,1);
-ee = zeros(num_mats,1);
-ee_fixprec = zeros(num_mats,1);
+[~, num_mats] = expm_testmats(); % total number of matrices 
 
-n_mats = zeros(num_mats,1);
-complex_reduc = zeros(num_mats,1);
-ii = 1;
-i = 1;
+for i=1:length(padetype)
+    padepoly = padetype(i); % numerator or denominator polynomial in Pade
+    rr = zeros(num_mats,1);
+    err_mpps = zeros(num_mats,1);
+    err_fixps = zeros(num_mats,1);
+    size_mats = zeros(num_mats,1);
+    complex_reduc = zeros(num_mats,1);
+    fprintf('\n* Tesing %s polyn in Pade, Matrix size %d \n', padepoly, n);
+    for k=1:num_mats
+        A = expm_testmats(k, n);
+        time = tic;
+        fprintf('\n* Matrix id: %d, get Pade params...', k);
+        [scal, m] = expm_params_pade_double(A);
+        fprintf('done in [%0.2f minutes]. \n', toc(time)/60);
 
-while i<=num_total_mats
-    fprintf('\n* Matrix id: %d\n', i);
-    A = mygallery(i,n);
-    while ishermitian(A)
-        i = i + 1;
-        A = mygallery(i,n);
-    end
-    [~, scal, m] = expm_var(A); % MATLAB expm with scaling and degree outputs
-    X = A/2^scal;
-    n_mats(ii) = size(X,1);
-    [p, s, usq_prec] = PS_exp_Pade_hsd(X, m, delta, Padetype);
+        X = A/2^scal;
+        size_mats(k) = size(X, 1);
     
-    % get the Pade coefficients
-    coef = (comput_coef_Pade(m, 32, Padetype);
-    p_fixprec = PS_fix_double_gen(X, m, double(coef));
+        time = tic;
+        fprintf('Computing Pade coefficients... ');
+        coef = comput_coef_pade_ap(m, num_digs*2, padepoly);
+        fprintf('done in [%0.2f minutes]. \n', toc(time)/60);
+        
+        time = tic;
+        fprintf('Running mixed-precision PS... ');
+        [p_mixprec, s, complex_reduc(k)] = mpps_exp_pade_hsd(X, m, padepoly);
+        fprintf('done in [%0.2f minutes]. \n', toc(time)/60);
 
-    % usq_prec
-    P = double(PS_ref_gen(X, m, coef));
-    % tau1(ii) = usq_prec(1)/usq_prec(2);
-    % if tau1(ii)==0, tau1(ii) = u; end
-    rr(ii) = floor(m/s);
-    ee(ii) = double(norm(P-p,1)/norm(P,1));
-    ee_fixprec(ii) = double(norm(P-p_fixprec,1)/norm(P,1));
-    complex_reduc(ii) = comput_complex_reduc_hsd(usq_prec, s, m);
-    i = i+1;
-    ii = ii+1;
+        time = tic;
+        fprintf('Running fixed-precision PS... ');
+        p_fixprec = fixps_gen_double(X, m, double(coef));
+        fprintf('done in [%0.2f minutes]. \n', toc(time)/60);
+    
+        time = tic;
+        fprintf('Calculating reference PS... ');
+        p_ref = refps_gen(X, m, coef, num_digs);
+        p_ref = double(p_ref);
+        fprintf('done in [%0.2f minutes]. \n', toc(time)/60);
+        
+        rr(k) = floor(m/s);
+        norm_p_ref = norm(p_ref,1);
+        err_mpps(k) = double(norm(p_ref-p_mixprec,1)/norm_p_ref);
+        err_fixps(k) = double(norm(p_ref-p_fixprec,1)/norm_p_ref);
+    end
+    [~, perm] = sort(size_mats.*rr);
+    err_fixps_scal = scal_small_error(err_fixps, num_digs);
+    err_mpps_scal = scal_small_error(err_mpps, num_digs);
+    % save the data for different types of Pade polynomials
+    dataname = sprintf('data/exp_pade_hsd_error_%d_%04d_%s.mat', n, num_digs, padepoly);
+    save(dataname, 'n', 'num_digs', 'err_mpps_scal', 'err_fixps_scal', ...
+            'complex_reduc', 'perm', 'rr', 'num_mats','u');
 end
 
+%% load the data and plot
 
-ee_fixprec_scal = scal_small_error(ee_fixprec, 16);
-ee_scal = scal_small_error(ee, 16);
+for i=1:length(padetype)
+    padepoly = padetype(i);
+    figure
+    dataname = sprintf('data/exp_pade_hsd_error_%d_%04d_%s.mat', n, num_digs, padepoly);
+    load(dataname);
+    semilogy(1:num_mats, rr(perm).*size_mats(perm)*u, '-',...
+        1:num_mats, err_mpps_scal(perm), 'v',...
+        1:num_mats, err_fixps_scal(perm),'o', ...
+        1:num_mats, u*ones(num_mats,1),  '--', 'LineWidth', 2,'MarkerSize', 8)
+    mycolors = [0 0 0; 0.2300 0.4800 0.3400; 1 0.4900 0; 0.3010 0.7450 0.9330];
+    ax = gca; 
+    ax.ColorOrder = mycolors;
+    legend('$rnu$', '$\epsilon_{v}$', '$\epsilon_{f}$', '$u$', ...
+        'interpreter', 'latex', 'Location', 'NE', 'FontSize', 16);
+    set(gca,'linewidth',1.2)
+    set(gca,'fontsize',16)
+    xlim([0,num_mats+1]);
+    xticks([0:20:120 num_mats]);
+    ylim(yaxis_lim)
+    yticks(yaxis_ticks)
+    figname1 = sprintf('data/exp_pade_hsd_error_%d_%04d_%s.eps', n, num_digs, padepoly);
+    exportgraphics(gca, figname1, 'ContentType', 'vector');
+    figure
+    bar(complex_reduc(perm))
+    set(gca,'linewidth',1.2)
+    set(gca,'fontsize',16)
+    xlim([0,num_mats+1]);
+    xticks([0:20:120 num_mats]);
+    ynum=[cellstr(num2str(get(gca,'ytick')'*100))];
+    pct = char(ones(size(ynum,1),1)*'%'); % Create a vector of '%' signs.
+    new_yticks = [char(ynum),pct]; % Append the '%' signs after the percentage values.
+    yticklabels(new_yticks);
+    figname2 = sprintf('data/exp_pade_hsd_cmplxreduc_%d_%04d_%s.eps', n, num_digs, padepoly);
+    exportgraphics(gca, figname2, 'ContentType', 'vector');
+end
 
-[~, perm] = sort(n_mats.*rr);
+%% subfunction
 
-% save the data
-dataname = sprintf('data/exp_mat_hsd.mat');
-save(dataname, 'n_mats', 'rr', 'perm', 'u', 'ee_scal', 'ee_fixprec_scal', 'complex_reduc', 'num_mats');
-   
-% load the data
-% dataname = sprintf('data/exp_mat_hsd.mat');
-% load(dataname)
+function coef = comput_coef_pade_ap(m, num_digs, options)
+% compute the vector of Pade coefficients for the matrix exponential in
+% arbitrary precision.
 
-
-
-
-
-semilogy(1:num_mats, rr(perm).*n_mats(perm)*u,'-', 1:num_mats, ee_scal(perm),'v', 1:num_mats, ee_fixprec_scal(perm),'o', ...
-    1:num_mats, u*ones(num_mats,1),'--','LineWidth',2,'MarkerSize',8)
-
-mycolors = [0 0 0; 0.2300 0.4800 0.3400; 1 0.4900 0; 0.3010 0.7450 0.9330];
-ax = gca; 
-ax.ColorOrder = mycolors;
-
-
-
-legend('$rnu$', '$\epsilon_{v}$', '$\epsilon_{f}$', '$u$', 'interpreter', 'latex', 'Location', 'NW', 'FontSize', 16);
-set(gca,'linewidth',1.2)
-set(gca,'fontsize',16)
-
-
-xlim([0,num_mats+1]);
-xticks([0:15:90 num_mats]);
-% ylim([1e-18 1e-10])
-% yticks(10.^(-18:2:-10))
-
-% exportgraphics(gca, '../figs/err-mat_n100_u16.eps', 'ContentType', 'vector');
-
-figure
-bar(complex_reduc(perm))
-set(gca,'linewidth',1.2)
-set(gca,'fontsize',16)
-xlim([0,num_mats+1]);
-xticks([0:15:90 num_mats]);
-ynum=[cellstr(num2str(get(gca,'ytick')'*100))];
-pct = char(ones(size(ynum,1),1)*'%'); % Create a vector of '%' signs.
-new_yticks = [char(ynum),pct]; % Append the '%' signs after the percentage values.
-yticklabels(new_yticks);
-
-% exportgraphics(gca, '../figs/cmplxreduc-mat_n100_u16.eps', 'ContentType', 'vector');
+mp.Digits(num_digs);
+m = mp(m);
+l_num = mp(0:1:m);
+if isequal(options,'numerator')
+    coef = (factorial(m)/factorial(2 * m)) ./...
+                (factorial(m-l_num).*factorial(l_num)) .*...
+                factorial(2*m - l_num);
+end
+if isequal(options,'denominator')
+    coef = (-1).^l_num .* ...
+        (factorial(m)/factorial(2 * m)) ./ ...
+                (factorial(m-l_num).*factorial(l_num)) .* ...
+                factorial(2*m - l_num);
+end
+end

@@ -105,7 +105,7 @@ if isequal(A,abs(A))
     c = norm(e,inf);
     mv = m;
 else
-    [c,v,w,it] = normest1(@afun_power);
+    [c,~,~,it] = normest1(@afun_power);
     mv = it(2)*2*m; % Since t = 2.
 end
 
@@ -118,7 +118,7 @@ end
           Z = isreal(A);
        else
 
-          [p,q] = size(X);
+          [p,~] = size(X);
           if p ~= n, error('Dimension mismatch'), end
 
           if isequal(flag,'notransp')

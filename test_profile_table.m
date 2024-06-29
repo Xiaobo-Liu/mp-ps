@@ -1,7 +1,9 @@
-warning off
-addpath('include', 'external');
-rng(0);
+addpath('external','include',"testmats");
+
 format compact
+warning off
+
+rng(0);
 
 timing = true;
 
@@ -51,14 +53,14 @@ fprintf(fileid_profile, ['\\begin{tabularx}{1.095\\textwidth}',...
             Tcoe = zeros(num_digits,1);
             Tfix = zeros(num_digits,1);
             for k=1:num_digits
-                [scal, m] = expm_params_taylor_mp(double(A), 'precision', deci_digits(k), 'abserr', false);
+                [scal, m] = expm_params_taylor_ap(double(A), 'precision', deci_digits(k), 'abserr', false);
                 X = A/2^scal;
                 mp.Digits(34);
                 u = 10^(mp(-deci_digits(k)));
                 fprintf('Running mixed-precision PS, digits = %d... \n', deci_digits(k));
-                [p, s, ~, divec, mixps_time] = PS_exp_Taylor_mp(X, m, u, timing);
+                [p, s, ~, divec, mixps_time] = mpps_exp_taylor_ap(X, m, u);
                 fprintf('Running fixed-precision PS, digits = %d... \n', deci_digits(k));
-                [~, Tfix(k)] = PS_fix_mp(X, m, deci_digits(k), timing);
+                [~, Tfix(k)] = fixps_exp_taylor_ap(X, m, deci_digits(k));
             
                 Mtot(k) = s + floor(m/s) - 1; % total number of matrix products
                 Mlow(k) = sum(divec<=deci_digits(k)/2); % matmul done in u^{1/2} or higher
@@ -87,3 +89,4 @@ fprintf(fileid_profile, ['\\begin{tabularx}{1.095\\textwidth}',...
     end
 fprintf(fileid_profile, '\\bottomrule\n');
 fprintf(fileid_profile, '\\end{tabularx}');
+fclose(fileid_profile);
