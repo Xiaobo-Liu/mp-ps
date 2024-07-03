@@ -11,7 +11,7 @@ nsizes = length(sizes);
 deci_digits = [64 256];
 num_digits = length(deci_digits);
 
-[~, num_mats] = expm_testmats_size_n(); % number of matrices of variable size
+[~, num_mats] = expm_testmats_vardim(); % number of matrices of variable dimension
 
 for i=1:nsizes
     n = sizes(i);
@@ -25,7 +25,7 @@ for i=1:nsizes
         sparse_density = zeros(num_mats,1);
         fprintf('\n* Matrix size %d, %d digits \n', n, digits);
         for k=1:1:num_mats
-            A = expm_testmats_size_n(k, n);
+            A = expm_testmats_vardim(k, n);
             sparse_density(k) = nnz(A) / numel(A);
             time = tic;
             fprintf('\n* Matrix id: %d, get params...', k);
@@ -72,13 +72,13 @@ for j=1:num_digits
     sparselegend1 = sprintf('spar[n=%d]', sizes(1));
     sparselegend2 = sprintf('spar[n=%d]', sizes(2));
     sparselegend3 = sprintf('spar[n=%d]', sizes(3));
-    legend('ratio=1', timelegend1, timelegend2, timelegend3,...
-        sparselegend1, sparselegend2, sparselegend3,...
-        'interpreter', 'latex', 'Location', 'NE', 'FontSize', 16);
+    legend('ratio=1', timelegend1, sparselegend1, timelegend2, sparselegend2, ...
+        timelegend3, sparselegend3,...
+        'interpreter', 'latex', 'Location', 'SE', 'FontSize', 16);
     set(gca,'linewidth',1.2)
     set(gca,'fontsize',16)
-    xlim([0,75]);
-    xticks(0:15:75);
+    xlim([0,num_mats+1]);
+    xticks([0:20:60 num_mats]);
     figname = sprintf('data/exp_taylor_ap_time_%04d.eps', digits);
     exportgraphics(gca, figname, 'ContentType', 'vector');
 end

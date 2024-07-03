@@ -87,7 +87,7 @@ for i=1:length(padetype)
     set(gca,'linewidth',1.2)
     set(gca,'fontsize',16)
     xlim([0,num_mats+1]);
-    xticks([0:20:120 num_mats]);
+    xticks([0:20:100 num_mats]);
     ylim(yaxis_lim)
     yticks(yaxis_ticks)
     figname1 = sprintf('data/exp_pade_ap_error_%d_%04d_%s.eps', n, num_digs, padepoly);
@@ -97,7 +97,7 @@ for i=1:length(padetype)
     set(gca,'linewidth',1.2)
     set(gca,'fontsize',16)
     xlim([0,num_mats+1]);
-    xticks([0:20:120 num_mats]);
+    xticks([0:20:100 num_mats]);
     ynum=[cellstr(num2str(get(gca,'ytick')'*100))];
     pct = char(ones(size(ynum,1),1)*'%'); % Create a vector of '%' signs.
     new_yticks = [char(ynum),pct]; % Append the '%' signs after the percentage values.

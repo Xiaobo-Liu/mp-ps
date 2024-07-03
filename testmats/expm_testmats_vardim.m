@@ -1,34 +1,29 @@
-function [A, n_mats] = expm_testmats(k, n)
-%EXPM_TESTMATS Test matrices for the matrix exponential.
+function [A, n_mats] = expm_testmats_vardim(k, n)
+%EXPM_TESTMATS_VARDIM  Test matrices for matrix exponential with variable 
+%dimension parametrized by n. This is a special subset of our EXPM_TESTMATS.
 %
-%   [A, NMATS] = EXPM_TESTMATS(K,N) selects the K'th test matrix.
+%   [A, NMATS] = EXPM_TESTMATS_VARDIM(K,N) selects the K'th test matrix.
 %   NMATS is the number of test matrices available. N sets the dimension of 
-%   the matrices if the size is undetermined; by default N=20.
-%   In total, there are 79+42 = 121 test matrices, including all matrices
-%   from EXPM_TESTMATS_VARDIM and all matrices from the MATRICES-EXPM 
-%   collection at 
-%   https://github.com/Xiaobo-Liu/matrices-expm
-%
-%   Matrices from the MATRICES-EXPM collection are in Group 5, in addition
-%   to the other four groups inherited from EXPM_TESTMATS_VARDIM. 
-%   Groups 1-4 consist of matrices of variable size that are more general 
-%   and are from the Anymatrix MATLAB toolbox
+%   the matrices. There are totally 26+17+33+3 = 79 test matrices of four
+%   groups that are more general and are from the Anymatrix MATLAB toolbox
 %   https://github.com/mmikaitis/anymatrix
-%   and they are classified by having
+%
+%   The test matrices are selective and are classified by having 
 %   1) positive real eigenvalues, 2) real eigenvalues, 
 %   3) complex eigenvalues, and 4) zero as an eigenvalue.
-%   Matrices from the MATRICES-EXPM collection are in group 5.
+%
+%   Matrices like Pascal(A) and binomial and invol from MATLAB gallery are
+%   not included for they can cause overflow problems for moderate size N.
 
-    indices = [101:126, 201:217, 301:333, 401:403, 501:542];
+    indices = [101:126, 201:217, 301:333, 401:403];
 
     n_mats = length(indices);
-  
     if nargin < 1
         A = [];
         return;
     end
     if nargin < 2
-        n = 20; % the default dimention if it is not specified
+        error('The dimension n of test matrices is not specified.');
     end
     local_index = indices(k);
 
@@ -120,49 +115,5 @@ function [A, n_mats] = expm_testmats(k, n)
       case 401, sA='core/creation'; A=anymatrix(sA,n); %nilpotent
       case 402, sA='core/hessfull01'; A=anymatrix(sA,n); %rank=n-1
       case 403, sA='gallery/gearmat'; A=anymatrix(sA,n);
-      
-        % Matrices from matrices-expm collection
-      case 501, sA='expm/alhi09r1'; A=anymatrix(sA);
-      case 502, sA='expm/alhi09r2'; A=anymatrix(sA);
-      case 503, sA='expm/alhi09r3'; A=anymatrix(sA);
-      case 504, sA='expm/alhi09r4'; A=anymatrix(sA);
-      case 505, sA='expm/dahi03'; A=anymatrix(sA);
-      case 506, sA='expm/dipa00'; A=anymatrix(sA);
-      case 507, sA='expm/edst04'; A=anymatrix(sA);
-      case 508, sA='expm/eigt7'; A=anymatrix(sA);
-      case 509, sA='expm/fahi19r1'; A=anymatrix(sA);
-      case 510, sA='expm/fahi19r2'; A=anymatrix(sA);
-      case 511, sA='expm/fahi19r3'; A=anymatrix(sA);
-      case 512, sA='expm/fahi19r4'; A=anymatrix(sA);
-      case 513, sA='expm/fasi7'; A=anymatrix(sA);
-      case 514, sA='expm/jemc05r1'; A=anymatrix(sA);
-      case 515, sA='expm/jemc05r2'; A=anymatrix(sA);
-      case 516, sA='expm/kase99'; A=anymatrix(sA);
-      case 517, sA='expm/kela89r1'; A=anymatrix(sA);
-      case 518, sA='expm/kela89r2'; A=anymatrix(sA);
-      case 519, sA='expm/kela98r1'; A=anymatrix(sA);
-      case 520, sA='expm/kela98r2'; A=anymatrix(sA);
-      case 521, sA='expm/kela98r3'; A=anymatrix(sA);
-      case 522, sA='expm/kuda10'; A=anymatrix(sA);
-      case 523, sA='expm/lara17r1'; A=anymatrix(sA);
-      case 524, sA='expm/lara17r2'; A=anymatrix(sA);
-      case 525, sA='expm/lara17r3'; A=anymatrix(sA);
-      case 526, sA='expm/lara17r4'; A=anymatrix(sA);
-      case 527, sA='expm/lara17r5'; A=anymatrix(sA);
-      case 528, sA='expm/lara17r6'; A=anymatrix(sA);
-      case 529, sA='expm/mopa03r1'; A=anymatrix(sA);
-      case 530, sA='expm/mopa03r2'; A=anymatrix(sA);
-      case 531, sA='expm/naha95'; A=anymatrix(sA);
-      case 532, sA='expm/nies19'; A=anymatrix(sA);    
-      case 533, sA='expm/pang85r1'; A=anymatrix(sA);
-      case 534, sA='expm/pang85r2'; A=anymatrix(sA);
-      case 535, sA='expm/pang85r3'; A=anymatrix(sA);
-      case 536, sA='expm/ross8'; A=anymatrix(sA);
-      case 537, sA='expm/trem05'; A=anymatrix(sA);
-      case 538, sA='expm/tsin13'; A=anymatrix(sA);
-      case 539, sA='expm/ward77r1'; A=anymatrix(sA);
-      case 540, sA='expm/ward77r2'; A=anymatrix(sA); 
-      case 541, sA='expm/ward77r3'; A=anymatrix(sA);
-      case 542, sA='expm/ward77r4'; A=anymatrix(sA);      
     end   
 end
